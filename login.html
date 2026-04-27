@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<title>Sorteio Função Célula</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+
+<style>
+:root {
+  --bg-1: #07111f;
+  --bg-2: #0f1b33;
+  --card: rgba(11, 18, 32, 0.78);
+  --card-border: rgba(255, 255, 255, 0.08);
+  --text: #eaf0ff;
+  --muted: rgba(234, 240, 255, 0.72);
+  --primary: #48a7ff;
+  --primary-strong: #2d7dff;
+  --danger: #ff5d5d;
+  --success: #58e08e;
+  --shadow: 0 24px 60px rgba(0, 0, 0, 0.35);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html, body {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: "Poppins", sans-serif;
+  color: var(--text);
+  text-align: center;
+  background:
+    radial-gradient(circle at top, rgba(72, 167, 255, 0.24), transparent 36%),
+    radial-gradient(circle at bottom right, rgba(88, 224, 142, 0.16), transparent 28%),
+    linear-gradient(180deg, var(--bg-1) 0%, var(--bg-2) 100%);
+  background-attachment: fixed;
+  padding: 18px 14px 28px;
+}
+
+h1 {
+  margin: 0 0 8px;
+  font-size: 1.85rem;
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+}
+
+.subtitle {
+  margin: 0 0 22px;
+  font-size: 0.92rem;
+  color: var(--muted);
+}
+
+input {
+  width: 100%;
+  padding: 15px 16px;
+  margin: 0 0 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text);
+  font-size: 1rem;
+  outline: none;
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+input::placeholder {
+  color: rgba(234, 240, 255, 0.45);
+}
+
+input:focus {
+  border-color: rgba(72, 167, 255, 0.65);
+  box-shadow: 0 0 0 4px rgba(72, 167, 255, 0.16);
+}
+
+button {
+  width: 100%;
+  padding: 14px 16px;
+  margin: 0 0 10px;
+  cursor: pointer;
+  border: none;
+  border-radius: 16px;
+  color: white;
+  font-weight: 700;
+  font-size: 0.98rem;
+  letter-spacing: 0.01em;
+  transition: transform 0.18s ease, box-shadow 0.18s ease, filter 0.18s ease;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.18);
+}
+
+button:active {
+  transform: translateY(1px) scale(0.99);
+  filter: brightness(0.98);
+}
+
+.sortear { background: linear-gradient(135deg, var(--primary) 0%, var(--primary-strong) 100%); }
+.resetar { background: linear-gradient(135deg, #ff7a7a 0%, var(--danger) 100%); }
+
+.reset-panel {
+  margin-top: 8px;
+  padding: 14px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.reset-panel input {
+  margin-bottom: 10px;
+}
+
+.reset-actions {
+  display: grid;
+  gap: 8px;
+}
+
+.reset-actions button {
+  margin: 0;
+}
+
+.app {
+  width: 100%;
+  max-width: 430px;
+  margin: 0 auto;
+  padding: 24px 16px 18px;
+  border: 1px solid var(--card-border);
+  border-radius: 28px;
+  background: var(--card);
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+}
+
+.hero {
+  margin-bottom: 18px;
+}
+
+ul {
+  list-style: none;
+  padding: 0;
+  margin: 16px 0 0;
+}
+
+li {
+  position: relative;
+  margin: 10px 0;
+  padding: 14px 14px 14px 16px;
+  border-radius: 18px;
+  text-align: left;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: var(--text);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+}
+
+#resultado {
+  min-height: 1.6em;
+  font-size: 1.02rem;
+  font-weight: bold;
+  color: var(--success);
+  margin: 14px 0 8px;
+  padding: 12px 14px;
+  border-radius: 16px;
+  background: rgba(88, 224, 142, 0.12);
+  border: 1px solid rgba(88, 224, 142, 0.22);
+}
+
+@media (min-width: 700px) {
+  body {
+    display: grid;
+    place-items: center;
+    min-height: 100vh;
+  }
+
+  .app {
+    transform: translateY(-6px);
+  }
+}
+</style>
+</head>
+
+<body>
+
+<main class="app">
+  <div class="hero">
+    <h1>Sorteio Função Célula</h1>
+    <p class="subtitle">Escolha uma função e acompanhe o resultado em tempo real.</p>
+  </div>
+
+  <input type="text" id="nome" placeholder="Digite seu nome">
+
+  <button class="sortear" onclick="sortear()">Sortear agora</button>
+  <button class="resetar" onclick="abrirPainelReset()">Resetar sorteio</button>
+
+  <div id="painelReset" class="reset-panel" hidden>
+    <input type="password" id="senhaReset" placeholder="Digite a senha para resetar">
+    <div class="reset-actions">
+      <button class="resetar" onclick="confirmarResetar()">Confirmar reset</button>
+      <button class="sortear" onclick="cancelarResetar()">Cancelar</button>
+    </div>
+  </div>
+
+  <p id="resultado"></p>
+
+  <h2>Resultado geral</h2>
+  <ul id="lista"></ul>
+</main>
+
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyBkS9uGnjXm1hCUipPT7Y9XrpicSVjMxlE",
+  authDomain: "sorteio-funcoes.firebaseapp.com",
+  databaseURL: "https://sorteio-funcoes-default-rtdb.firebaseio.com",
+  projectId: "sorteio-funcoes"
+};
+
+// Trava de segurança: verifica se as chaves ainda são as de exemplo
+if (firebaseConfig.apiKey === "SUA_API_KEY" || firebaseConfig.projectId === "SEU_PROJETO") {
+  alert("⛔ ATENÇÃO: O Firebase ainda não foi configurado com os seus dados reais!\n\nPor favor, substitua 'SUA_API_KEY' e 'SEU_PROJETO' no código pelas chaves do seu projeto.");
+  throw new Error("Interrompendo a execução: Firebase não configurado.");
+}
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
+// base das funções
+const funcoesBase = {
+  "Liderar": "",
+  "Oração Inicial": "",
+  "Mídia (Louvor&Adoração)": "",
+  "Oferta": "",
+  "Dinâmica": "",
+  "Palavra": "",
+  "Oração pelos enfermos": "",
+  "Oração pelo lanche": "",
+  "Oração final": ""
+};
+
+// inicializar banco
+async function iniciar() {
+  try {
+    const snap = await db.ref("funcoes").once("value");
+    const funcoesAtuais = snap.val() || {};
+    const funcoesNormalizadas = { ...funcoesBase, ...funcoesAtuais };
+
+    if (!snap.exists() || Object.keys(funcoesAtuais).length !== Object.keys(funcoesBase).length) {
+      await db.ref("funcoes").set(funcoesNormalizadas);
+    }
+  } catch (erro) {
+    console.error("Erro ao inicializar:", erro);
+  }
+}
+
+// Aguardar inicialização antes de permitir interações
+iniciar().then(() => {
+  // atualizar lista em tempo real
+  db.ref("funcoes").on("value", snapshot => {
+    const lista = document.getElementById("lista");
+    lista.innerHTML = "";
+
+    snapshot.forEach(item => {
+      const li = document.createElement("li");
+      li.textContent = `${item.key} → ${item.val() || "Disponível"}`;
+      lista.appendChild(li);
+    });
+  });
+});
+
+// sortear função
+async function sortear() {
+  try {
+    const nome = document.getElementById("nome").value.trim();
+    const resultado = document.getElementById("resultado");
+
+    if (!nome) {
+      resultado.innerText = "Digite seu nome";
+      return;
+    }
+
+    const snap = await db.ref("funcoes").once("value");
+    const funcoes = { ...funcoesBase, ...(snap.val() || {}) };
+
+    // impedir repetição de pessoa
+    if (Object.values(funcoes).includes(nome)) {
+      resultado.innerText = "Você já sorteou!";
+      return;
+    }
+
+    const disponiveis = Object.keys(funcoes).filter(f => !funcoes[f]);
+
+    if (disponiveis.length === 0) {
+      resultado.innerText = "Todas funções já foram sorteadas";
+      return;
+    }
+
+    const escolhida = disponiveis[Math.floor(Math.random() * disponiveis.length)];
+
+    await db.ref("funcoes/" + escolhida).set(nome);
+
+    const mensagem = `Parabéns, ${nome}! A função sorteada para você foi: ${escolhida}`;
+    resultado.innerText = mensagem;
+  } catch (erro) {
+    console.error("Erro ao sortear:", erro);
+    document.getElementById("resultado").innerText = "Ops! Ocorreu um erro no sorteio. Verifique se os dados do Firebase estão corretos.";
+  }
+}
+
+// reset protegido
+function abrirPainelReset() {
+  document.getElementById("painelReset").hidden = false;
+  document.getElementById("senhaReset").value = "";
+  document.getElementById("senhaReset").focus();
+}
+
+function cancelarResetar() {
+  document.getElementById("painelReset").hidden = true;
+  document.getElementById("senhaReset").value = "";
+}
+
+function confirmarResetar() {
+  const senha = document.getElementById("senhaReset").value;
+  const resultado = document.getElementById("resultado");
+
+  if (senha !== "1234") {
+    resultado.innerText = "Senha incorreta!";
+    return;
+  }
+
+  db.ref("funcoes").set(funcoesBase);
+  resultado.innerText = "Sorteio resetado!";
+  cancelarResetar();
+}
+</script>
+
+</body>
+</html>
