@@ -319,24 +319,36 @@ li {
 
 /* Mobile: preserve a tabela e permita rolagem horizontal */
 @media (max-width: 600px) {
+  .tabela-wrap {
+    overflow-x: hidden;
+  }
+
   .tabela-sorteio {
-    min-width: 520px;
+    width: 100%;
+    min-width: 0;
+    table-layout: fixed;
     font-size: 0.82rem;
   }
 
+  .tabela-sorteio th,
+  .tabela-sorteio td {
+    padding: 8px 3px;
+    overflow-wrap: anywhere;
+  }
+
   .tabela-sorteio .funcao {
-    width: 45%;
-    font-size: 0.85rem;
+    width: 40%;
+    font-size: 0.78rem;
   }
 
   .tabela-sorteio .anterior {
     width: 25%;
-    font-size: 0.85rem;
+    font-size: 0.78rem;
   }
 
   .tabela-sorteio .disponivel {
-    width: 30%;
-    font-size: 0.85rem;
+    width: 35%;
+    font-size: 0.78rem;
   }
 }
 
