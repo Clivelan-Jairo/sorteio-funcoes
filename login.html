@@ -1,0 +1,897 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<title>Sorteio Função Célula</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+
+<style>
+:root {
+  --bg-1: #07111f;
+  --bg-2: #0f1b33;
+  --card: rgba(11, 18, 32, 0.78);
+  --card-border: rgba(255, 255, 255, 0.08);
+  --text: #eaf0ff;
+  --muted: rgba(234, 240, 255, 0.72);
+  --primary: #48a7ff;
+  --primary-strong: #2d7dff;
+  --danger: #ff5d5d;
+  --success: #58e08e;
+  --shadow: 0 24px 60px rgba(0, 0, 0, 0.35);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html, body {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: "Poppins", sans-serif;
+  color: var(--text);
+  text-align: center;
+  background:
+    radial-gradient(circle at top, rgba(72, 167, 255, 0.24), transparent 36%),
+    radial-gradient(circle at bottom right, rgba(88, 224, 142, 0.16), transparent 28%),
+    linear-gradient(180deg, var(--bg-1) 0%, var(--bg-2) 100%);
+  background-attachment: fixed;
+  padding: 18px 14px 28px;
+}
+
+h1 {
+  margin: 0 0 8px;
+  font-size: 1.5rem;
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+}
+
+h2 {
+  font-size: 1.2rem;
+  margin: 14px 0 8px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.subtitle {
+  margin: 0 0 22px;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+input {
+  width: 100%;
+  padding: 15px 16px;
+  margin: 0 0 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text);
+  font-size: 1rem;
+  outline: none;
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+input::placeholder {
+  color: rgba(234, 240, 255, 0.45);
+}
+
+input:focus {
+  border-color: rgba(72, 167, 255, 0.65);
+  box-shadow: 0 0 0 4px rgba(72, 167, 255, 0.16);
+}
+
+select {
+  width: 100%;
+  padding: 15px 16px;
+  margin: 0 0 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text);
+  font-size: 1rem;
+  outline: none;
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  cursor: pointer;
+  font-family: "Poppins", sans-serif;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23eaf0ff' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  padding-right: 40px;
+}
+
+select:focus {
+  border-color: rgba(72, 167, 255, 0.65);
+  box-shadow: 0 0 0 4px rgba(72, 167, 255, 0.16);
+}
+
+select option {
+  background: var(--bg-2);
+  color: var(--text);
+}
+
+@media (max-width: 600px) {
+  input {
+    padding: 12px 14px;
+    font-size: 16px;
+  }
+
+  select {
+    padding: 12px 14px;
+    font-size: 16px;
+    padding-right: 36px;
+  }
+}
+
+button {
+  width: 100%;
+  padding: 14px 16px;
+  margin: 0 0 10px;
+  cursor: pointer;
+  border: none;
+  border-radius: 16px;
+  color: white;
+  font-weight: 700;
+  font-size: 0.98rem;
+  letter-spacing: 0.01em;
+  transition: transform 0.18s ease, box-shadow 0.18s ease, filter 0.18s ease;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.18);
+}
+
+button:active {
+  transform: translateY(1px) scale(0.99);
+  filter: brightness(0.98);
+}
+
+@media (max-width: 600px) {
+  button {
+    padding: 12px 14px;
+    font-size: 0.9rem;
+    margin: 0 0 8px;
+  }
+}
+
+.sortear { background: linear-gradient(135deg, var(--primary) 0%, var(--primary-strong) 100%); }
+.resetar { background: linear-gradient(135deg, #ff7a7a 0%, var(--danger) 100%); }
+
+.reset-panel {
+  margin-top: 8px;
+  padding: 14px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.reset-panel input {
+  margin-bottom: 10px;
+}
+
+.reset-actions {
+  display: grid;
+  gap: 8px;
+}
+
+.reset-actions button {
+  margin: 0;
+}
+
+@media (max-width: 600px) {
+  .reset-panel {
+    padding: 12px;
+    margin-top: 6px;
+  }
+
+  .reset-panel input {
+    padding: 12px 14px;
+    font-size: 16px;
+  }
+
+  .reset-actions {
+    gap: 6px;
+  }
+}
+
+.app {
+  width: 100%;
+  max-width: 430px;
+  margin: 0 auto;
+  padding: 20px 14px 18px;
+  border: 1px solid var(--card-border);
+  border-radius: 28px;
+  background: var(--card);
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+}
+
+.hero {
+  margin-bottom: 18px;
+}
+
+ul {
+  list-style: none;
+  padding: 0;
+  margin: 16px 0 0;
+}
+
+li {
+  position: relative;
+  margin: 10px 0;
+  padding: 14px 14px 14px 16px;
+  border-radius: 18px;
+  text-align: left;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: var(--text);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+}
+
+.tabela-sorteio {
+  width: 100%;
+  margin: 12px 0 0;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 0.9rem;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.tabela-sorteio thead {
+  background: rgba(72, 167, 255, 0.15);
+  border: 1px solid rgba(72, 167, 255, 0.3);
+  border-radius: 8px 8px 0 0;
+}
+
+.tabela-sorteio th {
+  padding: 8px 6px;
+  font-weight: 600;
+  font-size: 0.85rem;
+  color: var(--primary);
+  text-align: center;
+  letter-spacing: 0.3px;
+}
+
+.tabela-sorteio tbody tr {
+  background: rgba(255, 255, 255, 0.08);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.tabela-sorteio tbody tr:last-child {
+  border-bottom: none;
+  border-radius: 0 0 8px 8px;
+}
+
+.tabela-sorteio td {
+  padding: 8px 6px;
+  font-size: 0.85rem;
+  color: var(--text);
+  height: 32px;
+  vertical-align: middle;
+}
+
+.tabela-sorteio .funcao {
+  font-weight: 600;
+  text-align: left;
+  width: 35%;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  word-break: normal;
+  font-size: 0.85rem;
+}
+
+.tabela-sorteio .anterior {
+  color: var(--danger);
+  font-weight: 600;
+  text-align: center;
+  width: 30%;
+  font-size: 0.85rem;
+}
+
+.tabela-sorteio .disponivel {
+  color: var(--success);
+  font-weight: 600;
+  text-align: center;
+  width: 35%;
+  font-size: 0.85rem;
+}
+
+/* Mobile First - Cards empilhados */
+@media (max-width: 600px) {
+  .tabela-sorteio {
+    display: block;
+    border: none;
+    font-size: 0.85rem;
+  }
+
+  .tabela-sorteio thead {
+    display: none;
+  }
+
+  .tabela-sorteio tbody {
+    display: block;
+  }
+
+  .tabela-sorteio tr {
+    display: flex;
+    flex-direction: column;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    margin-bottom: 10px;
+    padding: 12px;
+  }
+
+  .tabela-sorteio td {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    height: auto;
+    font-size: 0.85rem;
+  }
+
+  .tabela-sorteio td:last-child {
+    border-bottom: none;
+  }
+
+  .tabela-sorteio td::before {
+    content: attr(data-label);
+    font-weight: 600;
+    color: var(--muted);
+    margin-right: 8px;
+    font-size: 0.75rem;
+    min-width: 80px;
+  }
+
+  .tabela-sorteio .funcao {
+    width: 100%;
+    font-size: 0.85rem;
+  }
+
+  .tabela-sorteio .anterior {
+    width: 100%;
+    text-align: right;
+    font-size: 0.85rem;
+  }
+
+  .tabela-sorteio .disponivel {
+    width: 100%;
+    text-align: right;
+    font-size: 0.85rem;
+  }
+}
+
+/* Tablet e Desktop */
+@media (min-width: 601px) {
+  .tabela-sorteio th,
+  .tabela-sorteio td {
+    padding: 10px 8px;
+  }
+
+  .tabela-sorteio {
+    font-size: 0.9rem;
+    max-height: 450px;
+  }
+
+  .tabela-sorteio th {
+    font-size: 0.9rem;
+  }
+
+  .tabela-sorteio td {
+    font-size: 0.9rem;
+    height: 36px;
+  }
+
+  .tabela-sorteio .funcao,
+  .tabela-sorteio .anterior,
+  .tabela-sorteio .disponivel {
+    font-size: 0.9rem;
+  }
+}
+
+#resultado {
+  min-height: 1.6em;
+  font-size: 1.02rem;
+  font-weight: bold;
+  color: var(--success);
+  margin: 14px 0 8px;
+  padding: 12px 14px;
+  border-radius: 16px;
+  background: rgba(88, 224, 142, 0.12);
+  border: 1px solid rgba(88, 224, 142, 0.22);
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+}
+
+@keyframes queda {
+  to {
+    transform: translateY(100vh) rotate(360deg);
+    opacity: 0;
+  }
+}
+
+#confete {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 9999;
+}
+
+.confete-item {
+  position: fixed;
+  width: 10px;
+  height: 10px;
+  animation: queda 3s linear forwards;
+}
+
+.confete-item.vermelho { background: var(--danger); }
+.confete-item.verde { background: var(--success); }
+.confete-item.azul { background: var(--primary); }
+.confete-item.amarelo { background: #ffd700; }
+
+@media (min-width: 601px) {
+  h1 {
+    font-size: 1.85rem;
+  }
+
+  .subtitle {
+    font-size: 0.92rem;
+  }
+}
+
+@media (min-width: 700px) {
+  body {
+    display: grid;
+    place-items: center;
+    min-height: 100vh;
+  }
+
+  .app {
+    transform: translateY(-6px);
+    padding: 24px 16px 18px;
+  }
+
+  h1 {
+    font-size: 2rem;
+  }
+
+  h2 {
+    font-size: 1.3rem;
+    margin: 16px 0 8px;
+  }
+
+  .tabela-sorteio {
+    font-size: 0.92rem;
+    max-height: 500px;
+  }
+
+  .tabela-sorteio th {
+    padding: 10px 8px;
+    font-size: 0.92rem;
+  }
+
+  .tabela-sorteio td {
+    padding: 10px 8px;
+    font-size: 0.92rem;
+    height: 38px;
+  }
+
+  .tabela-sorteio .funcao,
+  .tabela-sorteio .anterior,
+  .tabela-sorteio .disponivel {
+    font-size: 0.92rem;
+  }
+}
+</style>
+</head>
+
+<body>
+
+<main class="app">
+  <div class="hero">
+    <h1>Sorteio Função Célula</h1>
+    <p class="subtitle">Selecione seu nome e sorteie uma função.</p>
+  </div>
+
+  <select id="nome" required>
+    <option value="">-- Selecione seu nome --</option>
+    <option value="Jairo">Jairo</option>
+    <option value="Adriane">Adriane</option>
+    <option value="Aline">Aline</option>
+    <option value="Alcimar">Alcimar</option>
+    <option value="Mary">Mary</option>
+    <option value="Francinaldo">Francinaldo</option>
+    <option value="Isabel">Isabel</option>
+  </select>
+
+  <button class="sortear" onclick="sortear()">Sortear agora</button>
+  <button class="resetar" onclick="abrirPainelReset()">Resetar sorteio</button>
+
+  <div id="painelReset" class="reset-panel" hidden>
+    <input type="password" id="senhaReset" placeholder="Digite a senha para resetar">
+    <div class="reset-actions">
+      <button class="resetar" onclick="confirmarResetar()">Confirmar reset</button>
+      <button class="sortear" onclick="cancelarResetar()">Cancelar</button>
+    </div>
+  </div>
+
+  <div id="temporizadorDiv" hidden style="text-align: center; margin: 12px 0; padding: 20px; background: rgba(88, 224, 142, 0.15); border-radius: 16px; border: 2px solid rgba(88, 224, 142, 0.4);">
+    <p style="margin: 0; font-size: 0.9rem; color: var(--muted);">Sorteando...</p>
+    <p id="temporizador" style="margin: 8px 0 0; font-size: 3rem; font-weight: 800; color: var(--success); animation: pulse 0.5s infinite;">3</p>
+  </div>
+
+  <div id="confete"></div>
+
+  <p id="resultado"></p>
+
+  <div id="ultimoSorteadoDiv" style="margin: 12px 0; padding: 10px; background: rgba(72, 167, 255, 0.1); border-radius: 12px; border: 1px solid rgba(72, 167, 255, 0.2);">
+    <p style="margin: 0; font-size: 0.85rem; color: var(--muted);">Último sorteado na Palavra:</p>
+    <p id="ultimoSorteado" style="margin: 4px 0 0; font-size: 0.95rem; color: var(--primary);">-</p>
+  </div>
+
+  <h2>Resultado geral</h2>
+  <table class="tabela-sorteio">
+    <thead>
+      <tr>
+        <th>Função</th>
+        <th>Anterior</th>
+        <th>Sorteado</th>
+      </tr>
+    </thead>
+    <tbody id="lista"></tbody>
+  </table>
+</main>
+
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyBkS9uGnjXm1hCUipPT7Y9XrpicSVjMxlE",
+  authDomain: "sorteio-funcoes.firebaseapp.com",
+  databaseURL: "https://sorteio-funcoes-default-rtdb.firebaseio.com",
+  projectId: "sorteio-funcoes"
+};
+
+// Trava de segurança: verifica se as chaves ainda são as de exemplo
+if (firebaseConfig.apiKey === "SUA_API_KEY" || firebaseConfig.projectId === "SEU_PROJETO") {
+  alert("⛔ ATENÇÃO: O Firebase ainda não foi configurado com os seus dados reais!\n\nPor favor, substitua 'SUA_API_KEY' e 'SEU_PROJETO' no código pelas chaves do seu projeto.");
+  throw new Error("Interrompendo a execução: Firebase não configurado.");
+}
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
+// base das funções
+const funcoesBase = {
+  "Liderar": "",
+  "Oração Inicial e Final": "",
+  "Mídia (Louvor&Adoração)": "",
+  "Oferta": "",
+  "Dinâmica": "",
+  "Palavra": "",
+  "Oração pelos enfermos e Lanche": ""
+};
+
+// base para último sorteado (rastreia quem foi sorteado por último em cada função)
+const ultimoSorteadoBase = {
+  "Liderar": "",
+  "Oração Inicial e Final": "",
+  "Mídia (Louvor&Adoração)": "",
+  "Oferta": "",
+  "Dinâmica": "",
+  "Palavra": "Aline",
+  "Oração pelos enfermos e Lanche": ""
+};
+
+// inicializar banco
+async function iniciar() {
+  try {
+    // Resetar para o estado inicial
+    await db.ref("funcoes").set(funcoesBase);
+    await db.ref("ultimoSorteado").set(ultimoSorteadoBase);
+  } catch (erro) {
+    console.error("Erro ao inicializar:", erro);
+  }
+}
+
+// Aguardar inicialização antes de permitir interações
+iniciar().then(() => {
+  // atualizar lista em tempo real
+  db.ref("funcoes").on("value", snapshot => {
+    const lista = document.getElementById("lista");
+    lista.innerHTML = "";
+
+    snapshot.forEach(item => {
+      const funcao = item.key;
+      const pessoaAtual = item.val() || "-";
+      
+      // Buscar último sorteado
+      db.ref("ultimoSorteado/" + funcao).once("value", snapUltimo => {
+        const ultimoSorteado = snapUltimo.val() || "-";
+        
+        const tr = document.createElement("tr");
+        
+        // Coluna 1: Função
+        const tdFuncao = document.createElement("td");
+        tdFuncao.className = "funcao";
+        tdFuncao.setAttribute("data-label", "Função");
+        tdFuncao.textContent = funcao;
+        
+        // Coluna 2: Anterior (em vermelho)
+        const tdAnterior = document.createElement("td");
+        tdAnterior.className = "anterior";
+        tdAnterior.setAttribute("data-label", "Anterior");
+        tdAnterior.textContent = ultimoSorteado;
+        
+        // Coluna 3: Sorteado (em verde)
+        const tdDisponivel = document.createElement("td");
+        tdDisponivel.className = "disponivel";
+        tdDisponivel.setAttribute("data-label", "Sorteado");
+        if (pessoaAtual === "-") {
+          tdDisponivel.innerHTML = "✓ Disponível";
+        } else {
+          tdDisponivel.textContent = pessoaAtual;
+        }
+        
+        tr.appendChild(tdFuncao);
+        tr.appendChild(tdAnterior);
+        tr.appendChild(tdDisponivel);
+        lista.appendChild(tr);
+      });
+    });
+  });
+
+  // Atualizar informação do último sorteado em Palavra
+  db.ref("ultimoSorteado/Palavra").on("value", snapshot => {
+    const ultimoDiv = document.getElementById("ultimoSorteado");
+    ultimoDiv.innerText = snapshot.val() || "-";
+  });
+
+  // Atualizar select com pessoas que já sortearam
+  atualizarSelectDisponivel();
+});
+
+// Função para atualizar o select com pessoas disponíveis
+function atualizarSelectDisponivel() {
+  db.ref("funcoes").once("value", snapshot => {
+    const funcoes = snapshot.val() || {};
+    const selectNome = document.getElementById("nome");
+    
+    // Nomes cadastrados
+    const nomesDisponiveis = ["Jairo", "Adriane", "Aline", "Alcimar", "Mary", "Francinaldo", "Isabel"];
+    const nomesSorteados = Object.values(funcoes).filter(nome => nome !== "");
+    
+    // Remover opções de quem já sorteou
+    nomesDisponiveis.forEach(nome => {
+      if (nomesSorteados.includes(nome)) {
+        removerOpcaoSelect(nome);
+      } else {
+        // Adicionar se não existir
+        const options = Array.from(selectNome.options);
+        const jaExiste = options.some(opt => opt.value === nome);
+        if (!jaExiste) {
+          const option = document.createElement("option");
+          option.value = nome;
+          option.text = nome;
+          selectNome.appendChild(option);
+        }
+      }
+    });
+  });
+}
+
+// Função para remover uma opção do select
+function removerOpcaoSelect(nome) {
+  const selectNome = document.getElementById("nome");
+  const options = Array.from(selectNome.options);
+  
+  options.forEach(opt => {
+    if (opt.value === nome) {
+      opt.remove();
+    }
+  });
+}
+
+// Função para restaurar todas as opções do select
+function restaurarTodasOpcoes() {
+  const selectNome = document.getElementById("nome");
+  const nomesDisponiveis = ["Jairo", "Adriane", "Aline", "Alcimar", "Mary", "Francinaldo", "Isabel"];
+  
+  // Remover todas as opções (exceto a padrão)
+  const options = Array.from(selectNome.options);
+  options.forEach(opt => {
+    if (opt.value !== "") {
+      opt.remove();
+    }
+  });
+  
+  // Adicionar todas de volta
+  nomesDisponiveis.forEach(nome => {
+    const option = document.createElement("option");
+    option.value = nome;
+    option.text = nome;
+    selectNome.appendChild(option);
+  });
+  
+  // Resetar seleção
+  selectNome.value = "";
+}
+
+// Função para tocar som de tambor
+function tocarSomTambor() {
+  try {
+    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    const oscillator = audioContext.createOscillator();
+    const gainNode = audioContext.createGain();
+    
+    oscillator.connect(gainNode);
+    gainNode.connect(audioContext.destination);
+    
+    oscillator.frequency.setValueAtTime(150, audioContext.currentTime);
+    oscillator.frequency.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+    
+    gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+    
+    oscillator.start(audioContext.currentTime);
+    oscillator.stop(audioContext.currentTime + 0.3);
+  } catch (e) {
+    console.log("Som não disponível");
+  }
+}
+
+// Função para exibir confete
+function exibirConfete() {
+  const cores = ['vermelho', 'verde', 'azul', 'amarelo'];
+  const confeteDiv = document.getElementById("confete");
+  
+  for (let i = 0; i < 50; i++) {
+    const confeteItem = document.createElement("div");
+    confeteItem.className = `confete-item ${cores[Math.floor(Math.random() * cores.length)]}`;
+    confeteItem.style.left = Math.random() * 100 + "%";
+    confeteItem.style.delay = Math.random() * 0.2 + "s";
+    confeteItem.style.animationDelay = Math.random() * 0.2 + "s";
+    
+    confeteDiv.appendChild(confeteItem);
+  }
+  
+  // Remover confete após 3 segundos
+  setTimeout(() => {
+    confeteDiv.innerHTML = "";
+  }, 3000);
+}
+
+// sortear função
+async function sortear() {
+  try {
+    const nome = document.getElementById("nome").value;
+    const resultado = document.getElementById("resultado");
+    const temporizadorDiv = document.getElementById("temporizadorDiv");
+    const temporizador = document.getElementById("temporizador");
+
+    if (!nome) {
+      resultado.innerText = "Selecione seu nome";
+      return;
+    }
+
+    const snap = await db.ref("funcoes").once("value");
+    const funcoes = { ...funcoesBase, ...(snap.val() || {}) };
+
+    // impedir repetição de pessoa
+    if (Object.values(funcoes).includes(nome)) {
+      resultado.innerText = "Você já sorteou!";
+      return;
+    }
+
+    const disponiveis = Object.keys(funcoes).filter(f => !funcoes[f]);
+
+    if (disponiveis.length === 0) {
+      resultado.innerText = "Todas funções já foram sorteadas";
+      return;
+    }
+
+    // Filtrar funções: remover aquelas onde a pessoa foi a última sorteada
+    const snapUltimo = await db.ref("ultimoSorteado").once("value");
+    const ultimoSorteado = snapUltimo.val() || {};
+    
+    const disponiveisValidos = disponiveis.filter(funcao => ultimoSorteado[funcao] !== nome);
+
+    if (disponiveisValidos.length === 0) {
+      // Se não há nenhuma disponível, permitir escolher de todas (menos as já sorteadas)
+      resultado.innerText = "Você já foi sorteado em todas as funções disponíveis. Aguarde o reset ou sorteio de outros.";
+      return;
+    }
+
+    // Mostrar temporizador
+    temporizadorDiv.hidden = false;
+    resultado.innerText = "";
+    
+    // Som de tambor e contagem
+    let contador = 3;
+    const intervalo = setInterval(() => {
+      temporizador.innerText = contador;
+      tocarSomTambor();
+      contador--;
+      
+      if (contador < -1) {
+        clearInterval(intervalo);
+        temporizadorDiv.hidden = true;
+        
+        // Executar sorteio
+        const escolhida = disponiveisValidos[Math.floor(Math.random() * disponiveisValidos.length)];
+        
+        db.ref("funcoes/" + escolhida).set(nome);
+        db.ref("ultimoSorteado/" + escolhida).set(nome);
+
+        const mensagem = `Parabéns, ${nome}! A função sorteada para você foi: ${escolhida}`;
+        resultado.innerText = mensagem;
+        
+        // Remover nome do select
+        removerOpcaoSelect(nome);
+        
+        // Exibir confete
+        exibirConfete();
+      }
+    }, 800);
+
+  } catch (erro) {
+    console.error("Erro ao sortear:", erro);
+    document.getElementById("resultado").innerText = "Ops! Ocorreu um erro no sorteio. Verifique se os dados do Firebase estão corretos.";
+  }
+}
+
+// reset protegido
+function abrirPainelReset() {
+  document.getElementById("painelReset").hidden = false;
+  document.getElementById("senhaReset").value = "";
+  document.getElementById("senhaReset").focus();
+}
+
+function cancelarResetar() {
+  document.getElementById("painelReset").hidden = true;
+  document.getElementById("senhaReset").value = "";
+}
+
+function confirmarResetar() {
+  const senha = document.getElementById("senhaReset").value;
+  const resultado = document.getElementById("resultado");
+
+  if (senha !== "1234") {
+    resultado.innerText = "Senha incorreta!";
+    return;
+  }
+
+  // Resetar apenas as funções, preservando o último sorteado
+  db.ref("funcoes").set(funcoesBase);
+  resultado.innerText = "Sorteio resetado! (Histórico de último sorteado preservado)";
+  
+  // Restaurar todas as opções do select
+  restaurarTodasOpcoes();
+  
+  cancelarResetar();
+}
+</script>
+
+</body>
+</html>
