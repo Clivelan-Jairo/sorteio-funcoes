@@ -499,6 +499,8 @@ li {
     <option value="Mary">Mary</option>
     <option value="Francinaldo">Francinaldo</option>
     <option value="Isabel">Isabel</option>
+    <option value="Felipe">Felipe</option>
+    <option value="Ana">Ana</option>
   </select>
 
   <button class="sortear" onclick="sortear()">Sortear agora</button>
@@ -561,38 +563,70 @@ const db = firebase.database();
 // base das funções
 const funcoesBase = {
   "Liderar": "",
-  "Oração Inicial e Final": "",
+  "Oração Inicial": "",
+  "Oração Final": "",
   "Mídia (Louvor&Adoração)": "",
   "Oferta": "",
   "Dinâmica": "",
   "Palavra": "",
-  "Oração pelos enfermos e Lanche": ""
+  "Oração pelos enfermos": "",
+  "Oração pelo Lanche": ""
 };
 
 // base para último sorteado (rastreia quem foi sorteado por último em cada função)
 const ultimoSorteadoBase = {
   "Liderar": "",
-  "Oração Inicial e Final": "",
+  "Oração Inicial": "",
+  "Oração Final": "",
   "Mídia (Louvor&Adoração)": "",
   "Oferta": "",
   "Dinâmica": "",
   "Palavra": "Aline",
-  "Oração pelos enfermos e Lanche": ""
+  "Oração pelos enfermos": "",
+  "Oração pelo Lanche": ""
 };
+
+const nomesDisponiveis = ["Jairo", "Adriane", "Aline", "Alcimar", "Mary", "Francinaldo", "Isabel", "Felipe", "Ana"];
 
 // inicializar banco
 async function iniciar() {
   try {
     const snapshot = await db.ref().once("value");
+    const funcoesAtuais = snapshot.child("funcoes").val() || {};
+    const ultimosAtuais = snapshot.child("ultimoSorteado").val() || {};
 
-    // Criar os nós iniciais somente quando ainda não existem.
     const atualizacoesIniciais = {};
-    if (!snapshot.child("funcoes").exists()) {
-      atualizacoesIniciais.funcoes = funcoesBase;
-    }
-    if (!snapshot.child("ultimoSorteado").exists()) {
-      atualizacoesIniciais.ultimoSorteado = ultimoSorteadoBase;
-    }
+    const funcoesMigradas = { ...funcoesBase };
+    const ultimosMigrados = { ...ultimoSorteadoBase };
+    const migracoes = {
+      "Oração Inicial e Final": ["Oração Inicial", "Oração Final"],
+      "Oração pelos enfermos e Lanche": ["Oração pelos enfermos", "Oração pelo Lanche"]
+    };
+
+    Object.keys(funcoesBase).forEach(funcao => {
+      if (funcoesAtuais[funcao] !== undefined) {
+        funcoesMigradas[funcao] = funcoesAtuais[funcao];
+      }
+      if (ultimosAtuais[funcao] !== undefined) {
+        ultimosMigrados[funcao] = ultimosAtuais[funcao];
+      }
+    });
+
+    Object.entries(migracoes).forEach(([funcaoAntiga, funcoesNovas]) => {
+      if (funcoesAtuais[funcaoAntiga] !== undefined && !funcoesAtuais[funcoesNovas[0]]) {
+        funcoesMigradas[funcoesNovas[0]] = funcoesAtuais[funcaoAntiga];
+      }
+      if (ultimosAtuais[funcaoAntiga] !== undefined && !ultimosAtuais[funcoesNovas[0]]) {
+        ultimosMigrados[funcoesNovas[0]] = ultimosAtuais[funcaoAntiga];
+      }
+      atualizacoesIniciais[`funcoes/${funcaoAntiga}`] = null;
+      atualizacoesIniciais[`ultimoSorteado/${funcaoAntiga}`] = null;
+    });
+
+    Object.keys(funcoesMigradas).forEach(funcao => {
+      atualizacoesIniciais[`funcoes/${funcao}`] = funcoesMigradas[funcao];
+      atualizacoesIniciais[`ultimoSorteado/${funcao}`] = ultimosMigrados[funcao];
+    });
 
     if (Object.keys(atualizacoesIniciais).length > 0) {
       await db.ref().update(atualizacoesIniciais);
@@ -609,9 +643,8 @@ iniciar().then(() => {
     const lista = document.getElementById("lista");
     lista.innerHTML = "";
 
-    snapshot.forEach(item => {
-      const funcao = item.key;
-      const pessoaAtual = item.val() || "-";
+    Object.keys(funcoesBase).forEach(funcao => {
+      const pessoaAtual = snapshot.child(funcao).val() || "-";
       
       // Buscar último sorteado
       db.ref("ultimoSorteado/" + funcao).once("value", snapUltimo => {
@@ -666,7 +699,6 @@ function atualizarSelectDisponivel() {
     const selectNome = document.getElementById("nome");
     
     // Nomes cadastrados
-    const nomesDisponiveis = ["Jairo", "Adriane", "Aline", "Alcimar", "Mary", "Francinaldo", "Isabel"];
     const nomesSorteados = Object.values(funcoes).filter(nome => nome !== "");
     
     // Remover opções de quem já sorteou
@@ -703,8 +735,6 @@ function removerOpcaoSelect(nome) {
 // Função para restaurar todas as opções do select
 function restaurarTodasOpcoes() {
   const selectNome = document.getElementById("nome");
-  const nomesDisponiveis = ["Jairo", "Adriane", "Aline", "Alcimar", "Mary", "Francinaldo", "Isabel"];
-  
   // Remover todas as opções (exceto a padrão)
   const options = Array.from(selectNome.options);
   options.forEach(opt => {
@@ -802,7 +832,11 @@ async function sortear() {
     const snapUltimo = await db.ref("ultimoSorteado").once("value");
     const ultimoSorteado = snapUltimo.val() || {};
     
-    const disponiveisValidos = disponiveis.filter(funcao => ultimoSorteado[funcao] !== nome);
+    const disponiveisValidos = disponiveis.filter(funcao => {
+      const naoFoiUltimo = ultimoSorteado[funcao] !== nome;
+      const regraPalavra = (nome === "Ana" || nome === "Felipe") && funcao === "Palavra";
+      return naoFoiUltimo && !regraPalavra;
+    });
 
     if (disponiveisValidos.length === 0) {
       // Se não há nenhuma disponível, permitir escolher de todas (menos as já sorteadas)
