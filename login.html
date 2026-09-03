@@ -252,6 +252,12 @@ li {
   overflow-y: auto;
 }
 
+.tabela-wrap {
+  width: 100%;
+  overflow-x: auto;
+  border-radius: 8px;
+}
+
 .tabela-sorteio thead {
   background: rgba(72, 167, 255, 0.15);
   border: 1px solid rgba(72, 167, 255, 0.3);
@@ -311,69 +317,25 @@ li {
   font-size: 0.85rem;
 }
 
-/* Mobile First - Cards empilhados */
+/* Mobile: preserve a tabela e permita rolagem horizontal */
 @media (max-width: 600px) {
   .tabela-sorteio {
-    display: block;
-    border: none;
-    font-size: 0.85rem;
-  }
-
-  .tabela-sorteio thead {
-    display: none;
-  }
-
-  .tabela-sorteio tbody {
-    display: block;
-  }
-
-  .tabela-sorteio tr {
-    display: flex;
-    flex-direction: column;
-    background: rgba(255, 255, 255, 0.08);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 12px;
-    margin-bottom: 10px;
-    padding: 12px;
-  }
-
-  .tabela-sorteio td {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 8px 0;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-    height: auto;
-    font-size: 0.85rem;
-  }
-
-  .tabela-sorteio td:last-child {
-    border-bottom: none;
-  }
-
-  .tabela-sorteio td::before {
-    content: attr(data-label);
-    font-weight: 600;
-    color: var(--muted);
-    margin-right: 8px;
-    font-size: 0.75rem;
-    min-width: 80px;
+    min-width: 520px;
+    font-size: 0.82rem;
   }
 
   .tabela-sorteio .funcao {
-    width: 100%;
+    width: 45%;
     font-size: 0.85rem;
   }
 
   .tabela-sorteio .anterior {
-    width: 100%;
-    text-align: right;
+    width: 25%;
     font-size: 0.85rem;
   }
 
   .tabela-sorteio .disponivel {
-    width: 100%;
-    text-align: right;
+    width: 30%;
     font-size: 0.85rem;
   }
 }
@@ -553,16 +515,18 @@ li {
   </div>
 
   <h2>Resultado geral</h2>
-  <table class="tabela-sorteio">
-    <thead>
-      <tr>
-        <th>Função</th>
-        <th>Anterior</th>
-        <th>Sorteado</th>
-      </tr>
-    </thead>
-    <tbody id="lista"></tbody>
-  </table>
+  <div class="tabela-wrap">
+    <table class="tabela-sorteio">
+      <thead>
+        <tr>
+          <th>Função</th>
+          <th>Anterior</th>
+          <th>Sorteado</th>
+        </tr>
+      </thead>
+      <tbody id="lista"></tbody>
+    </table>
+  </div>
 </main>
 
 <script>
@@ -607,9 +571,20 @@ const ultimoSorteadoBase = {
 // inicializar banco
 async function iniciar() {
   try {
-    // Resetar para o estado inicial
-    await db.ref("funcoes").set(funcoesBase);
-    await db.ref("ultimoSorteado").set(ultimoSorteadoBase);
+    const snapshot = await db.ref().once("value");
+
+    // Criar os nós iniciais somente quando ainda não existem.
+    const atualizacoesIniciais = {};
+    if (!snapshot.child("funcoes").exists()) {
+      atualizacoesIniciais.funcoes = funcoesBase;
+    }
+    if (!snapshot.child("ultimoSorteado").exists()) {
+      atualizacoesIniciais.ultimoSorteado = ultimoSorteadoBase;
+    }
+
+    if (Object.keys(atualizacoesIniciais).length > 0) {
+      await db.ref().update(atualizacoesIniciais);
+    }
   } catch (erro) {
     console.error("Erro ao inicializar:", erro);
   }
@@ -840,18 +815,23 @@ async function sortear() {
         
         // Executar sorteio
         const escolhida = disponiveisValidos[Math.floor(Math.random() * disponiveisValidos.length)];
-        
-        db.ref("funcoes/" + escolhida).set(nome);
-        db.ref("ultimoSorteado/" + escolhida).set(nome);
 
-        const mensagem = `Parabéns, ${nome}! A função sorteada para você foi: ${escolhida}`;
-        resultado.innerText = mensagem;
-        
-        // Remover nome do select
-        removerOpcaoSelect(nome);
-        
-        // Exibir confete
-        exibirConfete();
+        Promise.all([
+          db.ref("funcoes/" + escolhida).set(nome),
+          db.ref("ultimoSorteado/" + escolhida).set(nome)
+        ]).then(() => {
+          const mensagem = `Parabéns, ${nome}! A função sorteada para você foi: ${escolhida}`;
+          resultado.innerText = mensagem;
+
+          // Remover nome do select
+          removerOpcaoSelect(nome);
+
+          // Exibir confete
+          exibirConfete();
+        }).catch(erro => {
+          console.error("Erro ao salvar sorteio:", erro);
+          resultado.innerText = "Não foi possível salvar o sorteio. Tente novamente.";
+        });
       }
     }, 800);
 
