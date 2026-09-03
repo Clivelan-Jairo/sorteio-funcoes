@@ -876,7 +876,7 @@ function confirmarResetar() {
 
   // Resetar apenas as funções, preservando o último sorteado
   db.ref("funcoes").set(funcoesBase);
-  resultado.innerText = "Sorteio resetado! (Histórico de último sorteado preservado)";
+  resultado.innerText = "Sorteio resetado!";
   
   // Restaurar todas as opções do select
   restaurarTodasOpcoes();
